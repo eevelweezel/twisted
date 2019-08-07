@@ -17,14 +17,11 @@ from twisted.persisted import (
 
 
 
-for obj in aot.__all__ + \
-           crefutil.__all__ + \
-           dirdbm.__all__ + \
-           sob.__all__ + \
-           styles.__all__:
-    deprecatedModuleAttribute(
-        Version('Twisted', 'NEXT', 0, 0),
-        '{} has been depricated and may be removed in the '
-        'next version'.format(obj),
-        'twisted.persisted',
-        obj)
+for mod in [aot, crefutil, dirdbm, sob, styles]:
+    for obj in mod.__all__:
+        deprecatedModuleAttribute(
+            Version('Twisted', 'NEXT', 0, 0),
+            '{} has been depricated and may be removed in the '
+            'next version'.format(obj),
+            mod.__name__,
+            obj)

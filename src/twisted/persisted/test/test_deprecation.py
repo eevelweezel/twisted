@@ -7,7 +7,7 @@ class AotDeprecationTests(TestCase):
     Deprecations in L{twisted.persisted.aot}.
     """
     def helper(self, test, obj):
-        path = 'twisted.persisted.aot.{}'.format(obj.__name__)
+        path = obj.__name__
         warnings = self.flushWarnings(
             [test])
         print(warnings)
