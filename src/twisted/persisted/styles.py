@@ -46,6 +46,25 @@ else:
 ## First, let's register support for some stuff that really ought to
 ## be registerable...
 
+
+
+__all__ = [
+    'doUpgrade',
+    'Ephemeral',
+    'pickleMethod',
+    'pickleModule',
+    'pickleStringI',
+    'pickleStringO',
+    'requireUpgrade',
+    'unpickleMethod',
+    'unpickleModule',
+    'unpickleStringI',
+    'unpickleStringO',
+    'Versioned',
+]
+
+
+
 def pickleMethod(method):
     'support function for copy_reg to pickle method refs'
     if _PY3:
