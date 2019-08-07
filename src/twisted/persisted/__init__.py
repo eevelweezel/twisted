@@ -17,7 +17,6 @@ from twisted.persisted import (
 
 
 
-
 for obj in aot.__all__ + \
            crefutil.__all__ + \
            dirdbm.__all__ + \
