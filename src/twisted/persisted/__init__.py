@@ -10,7 +10,8 @@ from twisted.python.versions import Version
 
 from twisted import persisted
 
-# TODO: define __all__ for modules...
+
+
 for obj in persisted.__all__:
     deprecatedModuleAttribute(
         Version('Twisted', 'NEXT', 0, 0),
