@@ -7,7 +7,6 @@ Twisted Persisted: Utilities for managing persistence.
 
 from twisted.python.deprecate import deprecatedModuleAttribute
 from twisted.python.versions import Version
-
 from twisted.persisted import (
     aot,
     crefutil,
