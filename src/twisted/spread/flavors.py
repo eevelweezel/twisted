@@ -23,6 +23,7 @@ but may have a small impact on users who subclass and override methods.
 # mechanisms (like XMLRPC)
 
 import sys
+from typing import Any, Dict
 
 from zope.interface import Interface, implementer
 
@@ -390,7 +391,7 @@ class RemoteCopy(Unjellyable):
     constructor which requires args in a subclass of L{RemoteCopy}!
     """
 
-    def setCopyableState(self, state):
+    def setCopyableState(self, state: Dict) -> Any:
         """I will be invoked with the state to copy locally.
 
         'state' is the data returned from the remote object's
@@ -398,6 +399,8 @@ class RemoteCopy(Unjellyable):
         object's dictionary (or a filtered approximation of it depending
         on my peer's perspective).
         """
+        if not isinstance(state, dict):
+            state = {}
         state = {
             x.decode("utf8") if isinstance(x, bytes) else x: y for x, y in state.items()
         }

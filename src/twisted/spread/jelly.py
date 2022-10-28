@@ -66,6 +66,7 @@ import decimal
 
 # System Imports
 import types
+from typing import Any, Dict
 import warnings
 from functools import reduce
 
@@ -142,7 +143,7 @@ def _createBlank(cls):
         return cls.__new__(cls)
 
 
-def _newInstance(cls, state):
+def _newInstance(cls, state: Dict) -> Any:
     """
     Make a new instance of a class without calling its __init__ method.
 
@@ -151,6 +152,8 @@ def _newInstance(cls, state):
 
     @return: A new instance of C{cls}.
     """
+    if not isinstance(state, dict):
+        state = {}
     instance = _createBlank(cls)
 
     def defaultSetter(state):
