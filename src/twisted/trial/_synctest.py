@@ -1046,8 +1046,11 @@ class SynchronousTestCase(_Assertions):
             result = PyUnitResultAdapter(result)
         else:
             result = new_result
-        result.startTest(self)
-        (doSkip, skipReason) = self.getSkip()
+        doSkip = None
+        try:
+            result.startTest(self)
+        except SkipTest:
+            (doSkip, skipReason) = self.getSkip()
         if doSkip:  # don't run test methods that are marked as .skip
             result.addSkip(self, skipReason)
             result.stopTest(self)
