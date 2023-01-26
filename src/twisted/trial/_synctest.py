@@ -992,16 +992,15 @@ class SynchronousTestCase(_Assertions):
     def getSkip(self) -> Tuple[bool, Optional[str]]:
         """
         Return the skip reason set on this test, if any is set. Checks on the
-        instance first, then the class, then the module, then packages. As
-        soon as it finds something with a C{skip} attribute, returns that in
-        a tuple (L{True}, L{str}).
+        instance first, then the class. As soon as it finds something with a
+        C{skip} attribute, returns that in a tuple (L{True}, L{str}).
         If the C{skip} attribute does not exist, look for C{__unittest_skip__}
         and C{__unittest_skip_why__} attributes which are set by the standard
         library L{unittest.skip} function.
         Returns (L{False}, L{None}) if it cannot find anything.
         See L{TestCase} docstring for more details.
         """
-        skipReason = util.acquireAttribute(self._parents, "skip", None)
+        skipReason = util.acquireAttribute(self._parents[:-1], "skip", None)
         doSkip = skipReason is not None
         if skipReason is None:
             doSkip = getattr(self, "__unittest_skip__", False)
@@ -1046,11 +1045,8 @@ class SynchronousTestCase(_Assertions):
             result = PyUnitResultAdapter(result)
         else:
             result = new_result
-        doSkip = None
-        try:
-            result.startTest(self)
-        except SkipTest:
-            (doSkip, skipReason) = self.getSkip()
+        result.startTest(self)
+        (doSkip, skipReason) = self.getSkip()
         if doSkip:  # don't run test methods that are marked as .skip
             result.addSkip(self, skipReason)
             result.stopTest(self)
