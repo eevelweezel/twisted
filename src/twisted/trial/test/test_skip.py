@@ -63,7 +63,7 @@ class SkipDecoratorUsedOnMethods(TestCase):
         self.assertTrue(True, "Test should run and not be skipped")
 
 
-@skip("skip it all!")
+@skip("Skip all tests when @skip is used on a class")
 class SkipDecoratorOnClass(TestCase):
     """
     All tests should be skipped because this class is decorated
