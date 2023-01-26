@@ -32,7 +32,7 @@ from typing import (
 )
 
 # Python 2.7 and higher has skip support built-in
-from unittest import SkipTest
+from unittest import SkipTest, TestResult
 
 from attrs import frozen
 
@@ -1028,7 +1028,7 @@ class SynchronousTestCase(_Assertions):
         treat this method as the thing with the actual test inside.
         """
 
-    def run(self, result):
+    def run(self, result: Type[TestResult]) -> None:
         """
         Run the test case, storing the results in C{result}.
 
