@@ -100,12 +100,14 @@ __all__ = [
 import base64
 import binascii
 import calendar
+from email.message import EmailMessage
 import cgi
 import math
 import os
 import re
 import tempfile
 import time
+import urllib
 import warnings
 from io import BytesIO
 from typing import AnyStr, Callable, List, Optional, Tuple
@@ -225,8 +227,10 @@ monthname_lower = [name and name.lower() for name in monthname]
 
 
 def _parseHeader(line):
-    # cgi.parse_header requires a str
-    key, pdict = cgi.parse_header(line.decode("charmap"))
+    # msg.get_params() requires a str
+    m = EmailMessage()
+    m["content-type"] = line.decode("charmap")
+    pdict = m.get_params()
 
     # We want the key as bytes, and cgi.parse_multipart (which consumes
     # pdict) expects a dict of str keys but bytes values
@@ -983,7 +987,7 @@ class Request:
                 args.update(parse_qs(self.content.read(), 1))
             elif key == mfd:
                 try:
-                    cgiArgs = cgi.parse_multipart(
+                    cgiArgs = urllib.parse.parse_multipart_qs(
                         self.content,
                         pdict,
                         encoding="utf8",
