@@ -100,8 +100,8 @@ __all__ = [
 import base64
 import binascii
 import calendar
-from email.message import EmailMessage
 import cgi
+from email.message import EmailMessage
 import math
 import os
 import re
@@ -224,6 +224,62 @@ monthname = [
 ]
 weekdayname_lower = [name.lower() for name in weekdayname]
 monthname_lower = [name and name.lower() for name in monthname]
+
+
+def parse_multipart(fp, pdict, encoding="utf-8", errors="replace", separator='&'):
+     """Parse multipart input.
+
+     Arguments:
+     fp   : input file
+     pdict: dictionary containing other parameters of content-type header
+     encoding, errors: request encoding and error handler, passed to
+     FieldStorage
+
+     Returns a dictionary just like parse_qs(): keys are the field names, each
+     value is a list of values for that field. For non-file fields, the value
+     is a list of strings.
+     """
+     # RFC 2046, Section 5.1 : The "multipart" boundary delimiters are always
+     # represented as 7bit US-ASCII.
+     class Fields:
+
+         def __init__(
+                 self,
+                 fp,
+                 headers=None,
+                 encoding='utf-8',
+                 environ=os.environ,
+                 separator='&',
+         ):
+             self.fp = fp
+             self.headers = headers
+             self.encoding = encoding
+             self.environ = environ
+             self.separator = separator
+
+         def getlist(self, key):
+             """ Return list of received values."""
+             if key in self:
+                 value = self[key]
+                 if isinstance(value, list):
+                     return [x.value for x in value]
+                 else:
+                     return [value.value]
+             else:
+                 return []
+
+
+     boundary = pdict['boundary'].decode('ascii')
+     ctype = "multipart/form-data; boundary={}".format(boundary)
+     headers = EmailMessage()
+     headers.set_type(ctype)
+     try:
+         headers['Content-Length'] = pdict['CONTENT-LENGTH']
+     except KeyError:
+         pass
+     fs = Fields(fp, headers=headers, encoding=encoding, errors=errors,
+         environ={'REQUEST_METHOD': 'POST'}, separator=separator)
+     return {k: fs.getlist(k) for k in fs}
 
 
 def _parseparam(s):
