@@ -100,7 +100,6 @@ __all__ = [
 import base64
 import binascii
 import calendar
-import cgi
 from email.message import EmailMessage
 import math
 import os
@@ -1065,7 +1064,7 @@ class Request:
                 args.update(parse_qs(self.content.read(), 1))
             elif key == mfd:
                 try:
-                    cgiArgs = cgi.parse_multipart(
+                    cgiArgs = parse_multipart(
                         self.content,
                         pdict,
                         encoding="utf8",
