@@ -226,13 +226,35 @@ weekdayname_lower = [name.lower() for name in weekdayname]
 monthname_lower = [name and name.lower() for name in monthname]
 
 
-def _parseHeader(line):
-    # msg.get_params() requires a str
-    m = EmailMessage()
-    m["content-type"] = line.decode("charmap")
-    pdict = m.get_params()
+def _parseparam(s):
+     while s[:1] == ';':
+         s = s[1:]
+         end = s.find(';')
+         while end > 0 and (s.count('"', 0, end) - s.count('\\"', 0, end)) % 2:
+             end = s.find(';', end + 1)
+         if end < 0:
+             end = len(s)
+         f = s[:end]
+         yield f.strip()
+         s = s[end:]
 
-    # We want the key as bytes, and cgi.parse_multipart (which consumes
+
+def _parseHeader(line):
+    # get the content-type header
+    parts = _parseparam(';' + line.decode("charmap"))
+    key = parts.__next__()
+    pdict = {}
+    for p in parts:
+        i = p.find('=')
+        if i >= 0:
+            name = p[:i].strip().lower()
+            value = p[i+1:].strip()
+            if len(value) >= 2 and value[0] == value[-1] == '"':
+                value = value[1:-1]
+                value = value.replace('\\\\', '\\').replace('\\"', '"')
+            pdict[name] = value
+
+    # We want the key as bytes, and _parse_multipart (which consumes
     # pdict) expects a dict of str keys but bytes values
     key = key.encode("charmap")
     pdict = {x: y.encode("charmap") for x, y in pdict.items()}
@@ -987,7 +1009,7 @@ class Request:
                 args.update(parse_qs(self.content.read(), 1))
             elif key == mfd:
                 try:
-                    cgiArgs = urllib.parse.parse_multipart_qs(
+                    cgiArgs = cgi.parse_multipart(
                         self.content,
                         pdict,
                         encoding="utf8",
