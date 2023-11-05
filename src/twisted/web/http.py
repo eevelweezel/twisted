@@ -101,7 +101,6 @@ __all__ = [
 import base64
 import binascii
 import calendar
-import cgi
 import math
 import os
 import re
@@ -224,20 +223,6 @@ monthname = [
 ]
 weekdayname_lower = [name.lower() for name in weekdayname]
 monthname_lower = [name and name.lower() for name in monthname]
-
-
-def _parseContentType(line: bytes) -> tuple[bytes, dict[str, bytes]]:
-    msg = EmailMessage()
-    msg["content-type"] = line.decode("charmap")
-
-    key = msg.get_content_type()
-    pdict = msg["content-type"].params
-
-    # We want the key as bytes, and cgi.parse_multipart (which consumes
-    # pdict) expects a dict of str keys but bytes values
-    encodedKey = key.encode("charmap")
-    pdict = {x: y.encode("charmap") for x, y in pdict.items()}
-    return (encodedKey, pdict)
 
 
 def urlparse(url):
@@ -959,7 +944,6 @@ class Request:
         clength = self.content.tell()
         self.content.seek(0, 0)
         self.args = {}
-
         self.method, self.uri = command, path
         self.clientproto = version
         x = self.uri.split(b"?", 1)
@@ -971,46 +955,18 @@ class Request:
             self.args = parse_qs(argstring, 1)
 
         # Argument processing
-        args = self.args
         ctype = self.requestHeaders.getRawHeaders(b"content-type")
         if ctype is not None:
             ctype = ctype[0]
-
         if self.method == b"POST" and ctype and clength:
-            mfd = b"multipart/form-data"
-            key, pdict = _parseContentType(ctype)
-            # This weird CONTENT-LENGTH param is required by
-            # cgi.parse_multipart() in some versions of Python 3.7+, see
-            # bpo-29979. It looks like this will be relaxed and backported, see
-            # https://github.com/python/cpython/pull/8530.
-            pdict["CONTENT-LENGTH"] = clength
-            if key == b"application/x-www-form-urlencoded":
-                args.update(parse_qs(self.content.read(), 1))
-            elif key == mfd:
-                try:
-                    cgiArgs = cgi.parse_multipart(
-                        self.content,
-                        pdict,
-                        encoding="utf8",
-                        errors="surrogateescape",
-                    )
+            mfd = b"multipart"
+            if ctype == b"application/x-www-form-urlencoded":
+                self.args.update(parse_qs(self.content.read(), 1))
 
-                    # The parse_multipart function on Python 3.7+
-                    # decodes the header bytes as iso-8859-1 and
-                    # decodes the body bytes as utf8 with
-                    # surrogateescape -- we want bytes
-                    self.args.update(
-                        {
-                            x.encode("iso-8859-1"): [
-                                z.encode("utf8", "surrogateescape")
-                                if isinstance(z, str)
-                                else z
-                                for z in y
-                            ]
-                            for x, y in cgiArgs.items()
-                            if isinstance(x, str)
-                        }
-                    )
+            elif mfd in ctype:
+                try:
+                    reqArgs = self.parseMultipart(ctype)
+                    self.args.update(reqArgs)
                 except Exception as e:
                     # It was a bad request, or we got a signal.
                     self.channel._respondToBadRequestAndDisconnect()
@@ -1019,10 +975,46 @@ class Request:
                     else:
                         # If it's not a userspace error from CGI, reraise
                         raise
-
             self.content.seek(0, 0)
-
         self.process()
+
+    def parseMultipart(self, ctype) -> dict:
+        """
+        Parse multipart request content.
+
+        This method is not intended for users.
+
+        @type ctype: C{bytes}
+        @param ctype: The content-type header from the request.
+
+        """
+        # content-disposition will be in the content (need "name")
+        _, boundary = ctype.split(b"=")
+        if b";" in boundary:
+            boundary, _ = boundary.split(b";")
+        boundary.decode("ascii") # blow up if it's not
+        data = self.content.read()
+        hdrs, body = data.split(b"\r\n\r\n")
+        headers = hdrs.split(b"\r\n")
+        key = b"text"
+        try:
+            cd = [h for h in headers if b"Content-Disposition" in h]
+            if cd:
+                name = [c for c in cd[0].split(b";") if b"name=" in c]
+                key = name[0].split(b'"')[1]
+        except IndexError:
+            pass
+        # trim newlines and trailing dashes
+        body = body.rstrip()
+        body = body.rstrip(b"--")
+        parts = body.split(b"\r\n--" + boundary)
+        content = []
+        for p in parts:
+            if p:
+                content.append(p)
+        if content:
+            return {key: content}
+        return {}
 
     def __repr__(self) -> str:
         """
