@@ -479,8 +479,8 @@ class BaseSSHTransportTests(BaseSSHTransportBaseCase, TransportTestCase):
         + common.NS(b"ssh-rsa")
         + common.NS(b"aes256-ctr")
         + common.NS(b"aes256-ctr")
-        + common.NS(b"hmac-sha1")
-        + common.NS(b"hmac-sha1")
+        + common.NS(b"hmac-sha2-256")
+        + common.NS(b"hmac-sha2-256")
         + common.NS(b"none")
         + common.NS(b"none")
         + common.NS(b"")
@@ -2872,24 +2872,6 @@ class GetMACTests(TestCase):
         """
         self.assertGetMAC(b"hmac-sha2-256", sha256, digestSize=32, blockPadSize=32)
 
-    def test_hmacsha1(self):
-        """
-        When L{SSHCiphers._getMAC} is called with the C{b"hmac-sha1"} MAC
-        algorithm name it returns a tuple of (sha1 digest object, inner pad,
-        outer pad, sha1 digest size) with a C{key} attribute set to the value
-        of the key supplied.
-        """
-        self.assertGetMAC(b"hmac-sha1", sha1, digestSize=20, blockPadSize=44)
-
-    def test_hmacmd5(self):
-        """
-        When L{SSHCiphers._getMAC} is called with the C{b"hmac-md5"} MAC
-        algorithm name it returns a tuple of (md5 digest object, inner pad,
-        outer pad, md5 digest size) with a C{key} attribute set to the value of
-        the key supplied.
-        """
-        self.assertGetMAC(b"hmac-md5", md5, digestSize=16, blockPadSize=48)
-
     def test_none(self):
         """
         When L{SSHCiphers._getMAC} is called with the C{b"none"} MAC algorithm
@@ -3000,8 +2982,8 @@ class SSHCiphersTests(TestCase):
         ]
 
         for key, data, mac in vectors:
-            outMAC = transport.SSHCiphers(b"none", b"none", b"hmac-md5", b"none")
-            outMAC.outMAC = outMAC._getMAC(b"hmac-md5", key)
+            outMAC = transport.SSHCiphers(b"none", b"none", b"hmac-sha2-256", b"none")
+            outMAC.outMAC = outMAC._getMAC(b"hmac-sha2-256", key)
             (seqid,) = struct.unpack(">L", data[:4])
             shortened = data[4:]
             self.assertEqual(

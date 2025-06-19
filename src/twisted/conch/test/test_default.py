@@ -307,8 +307,8 @@ class ConchOptionsParsing(TestCase):
         self.assertEqual(opts["macs"], [b"hmac-sha2-512"])
         opts.opt_macs(b"hmac-sha2-512")
         self.assertEqual(opts["macs"], [b"hmac-sha2-512"])
-        opts.opt_macs("hmac-sha2-256,hmac-sha1,hmac-md5")
-        self.assertEqual(opts["macs"], [b"hmac-sha2-256", b"hmac-sha1", b"hmac-md5"])
+        opts.opt_macs("hmac-sha2-256")
+        self.assertEqual(opts["macs"], [b"hmac-sha2-256"])
 
     def test_host_key_algorithms(self):
         """
